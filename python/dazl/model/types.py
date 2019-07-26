@@ -197,6 +197,12 @@ class _Reference:
     """
     __slots__ = ('module', 'name')
 
+    @classmethod
+    def parse(cls, s):
+        l, _, p = s.partition('@')
+        m, _, n = l.partition(':')
+        return TypeReference(ModuleRef(p, m.split('.')), n.split('.'))
+
     module: 'ModuleRef'
     name: 'Sequence[str]'
 
@@ -247,7 +253,7 @@ class _Reference:
         return self.full_name
 
     def __repr__(self):
-        return f"{self.full_name}@{self.module.package_id}"
+        return f"{self.full_name_unambiguous}@{self.module.package_id}"
 
 
 class TypeReference(Type, _Reference):

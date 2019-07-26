@@ -8,8 +8,8 @@ from threading import RLock
 from types import MappingProxyType
 
 from dataclasses import dataclass
-from typing import Any, Collection, Dict, Generic, List, Mapping, Optional, Sequence, TypeVar, \
-    Union, TYPE_CHECKING
+from typing import Any, Callable, Collection, Dict, Generic, List, Mapping, Optional, Sequence, \
+    Set, TypeVar, Union, TYPE_CHECKING
 
 from .types import Template, TemplateChoice, Type, TypeReference, UnresolvedTypeReference, \
     TypeAdjective, ConcreteType, ValueReference
@@ -300,6 +300,72 @@ class TypeCache(Generic[T]):
             candidates = self.by_package_lookup.get(package_id, {}).get(type_name, ())
 
         return {t.data_type.name.full_name_unambiguous: t for t in candidates}.values()
+
+
+def find_dependencies(store: PackageStore, types: 'Collection[Type]') -> 'Set[TypeReference]':
+    """
+    Find all of the :class:`TypeReference`s required in order to process any of the given specified
+    types.
+
+    :param store:
+    :param types:
+    :return:
+    """
+    from .types import type_dispatch_table, RecordType, VariantType, MapType, EnumType, \
+        OptionalType, ListType, TypeApp
+
+    discovered = set()  # type: Set[TypeReference]
+
+    def collect_type_ref(tr: 'TypeReference'):
+        if tr not in discovered:
+            _find_type_definitions(store.resolve_type_reference(tr))
+
+    def collect_record_or_variant_type_definitions(tt: 'Union[RecordType, VariantType]') -> None:
+        if tt.name is None or tt.name in discovered:
+            return
+
+        discovered.add(tt.name)
+        for _, value_type in tt.named_args:
+            if value_type not in discovered:
+                _find_type_definitions(value_type)
+
+    def find_map_type_definitions(mt: 'MapType') -> None:
+        _find_type_definitions(mt.value_type)
+
+    def find_type_app_type_definitions(ta: 'TypeApp') -> None:
+        _find_type_definitions(ta.body)
+        for arg in ta.arguments:
+            _find_type_definitions(arg)
+
+    def find_enum_type_definitions(et: 'EnumType') -> None:
+        discovered.add(et.name)
+
+    def find_optional_type_definitions(ot: 'OptionalType') -> None:
+        _find_type_definitions(ot.type_parameter)
+
+    def find_list_type_definitions(lt: 'ListType') -> None:
+        _find_type_definitions(lt.type_parameter)
+
+    def collect_skip(_) -> None: pass
+
+    _find_type_definitions: Callable[[Type], None] = type_dispatch_table(
+        collect_type_ref,
+        collect_skip,
+        find_type_app_type_definitions,
+        collect_skip,
+        collect_skip,
+        find_optional_type_definitions,
+        find_list_type_definitions,
+        lambda mt: find_map_type_definitions(mt),
+        collect_record_or_variant_type_definitions,
+        collect_record_or_variant_type_definitions,
+        find_enum_type_definitions,
+        collect_skip)
+
+    for daml_type in types:
+        _find_type_definitions(daml_type)
+
+    return discovered
 
 
 def _immutable_mmc(mapping: 'Mapping[str, Mapping[str, Collection[T]]]') -> \

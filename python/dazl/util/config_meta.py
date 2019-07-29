@@ -9,9 +9,11 @@ import logging
 
 from argparse import _ActionsContainer
 from dataclasses import dataclass, field, fields, Field
-from typing import Any, Callable, FrozenSet, Optional, Sequence, Tuple
+from typing import Any, Callable, FrozenSet, Optional, Sequence, Tuple, TYPE_CHECKING
 
-from ..model.core import Party
+if TYPE_CHECKING:
+    from ..model.core import Party
+    from ..util.dar import DarFile
 
 
 def config_field(
@@ -117,6 +119,26 @@ def _parse_party_list(obj) -> 'Sequence[Party]':
         return obj
 
 
+def _parse_dar_files(obj) -> 'Sequence[DarFile]':
+    """
+    Take either a string, a sequence of strings, a DarFile instance, or a sequence of DarFile
+    instances and return a sequence of a DarFile.
+    """
+    if isinstance(obj, (str, DarFile)):
+        return [_as_dar_file(obj)]
+    else:
+        return list(map(_as_dar_file, obj))
+
+
+def _as_dar_file(obj: Any) -> 'DarFile':
+    if isinstance(obj, str):
+        return DarFile(obj)
+    elif isinstance(obj, DarFile):
+        return obj
+    else:
+        raise TypeError(f'Could not convert {obj} to a DarFile')
+
+
 BOOLEAN_TYPE = ConfigParameterType(None, bool)
 COUNT_TYPE = ConfigParameterType('COUNT', int)
 BLOCK_OFFSET_TYPE = ConfigParameterType('OFFSET', _parse_block_offset)
@@ -128,3 +150,4 @@ PORT_TYPE = ConfigParameterType('PORT', int)
 STRING_TYPE = ConfigParameterType('STRING', _parse_str)
 PATH_TYPE = ConfigParameterType('PATH', _parse_str)
 VERIFY_SSL_TYPE = ConfigParameterType('VERIFY_SSL', _parse_str)
+DAR_FILES_TYPE = ConfigParameterType('DAR_FILES', _parse_dar_files)

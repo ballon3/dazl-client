@@ -1,5 +1,6 @@
 daml 1.2
 module LibraryModules where
 
+import Account()
 import Address()
 import Primitives()

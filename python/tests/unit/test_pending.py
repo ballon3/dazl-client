@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from dazl import sandbox, create, exercise, Network
-from .dars import Pending
 
 PARTY = 'Operator'
 Counter = 'Pending.Counter'

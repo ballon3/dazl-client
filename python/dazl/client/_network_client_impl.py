@@ -25,7 +25,7 @@ from .bots import Bot, BotCollection
 from .config import AnonymousNetworkConfig, NetworkConfig, URLConfig, \
     DEFAULT_CONNECT_TIMEOUT_SECONDS
 from ..metrics import MetricEvents
-from ..model.core import Party, RunLevel, DazlPartyMissingError
+from ..model.core import Party, RunLevel, DazlPartyMissingError, UserTerminateRequest
 from ..model.ledger import LedgerMetadata
 from ..model.network import connection_settings
 from ..model.reading import InitEvent, ReadyEvent, BaseEvent
@@ -185,6 +185,8 @@ class _NetworkImpl:
                 set_event_loop(loop)
 
                 loop.run_until_complete(self.aio_run(run_state=run_state))
+            except UserTerminateRequest:
+                pass
             except:
                 LOG.exception('The main event loop died!')
 
@@ -433,6 +435,10 @@ class _NetworkRunner:
         prev_offset = None
         keep_running = True
 
+        # make sure that all DARs that are required by the application are loaded first
+
+
+
         self._bot_coroutines.append(ensure_future(self._network_impl.bots._main()))
 
         while keep_running:
@@ -524,6 +530,7 @@ class _NetworkRunner:
             return first_offset
 
         # get metadata about the ledger
+        await self.pool.upload_package() self._config.dar_files
         metadata = await self.pool.ledger()
         self._network_impl._cached_metadata = metadata
 

@@ -1,0 +1,17 @@
+daml 1.2
+module Visibility where
+
+template PrivateContract
+  with
+    someParty : Party
+  where
+    signatory someParty
+
+
+template PublicContract
+  with
+    publisher : Party
+    allParty  : Party
+  where
+    signatory publisher
+    observer allParty

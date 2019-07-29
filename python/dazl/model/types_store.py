@@ -78,6 +78,24 @@ class PackageStore:
         self._data_types = safe_dict_cast(TypeReference, Type, data_types)
         self._templates = safe_dict_cast(TypeReference, Template, templates)
 
+    def __getstate__(self):
+        return dict(
+            _archives=list(self._archives),
+            _value_types=dict(self._value_types),
+            _data_types=dict(self._data_types),
+            _templates=dict(self._templates))
+
+    def __setstate__(self, state):
+        self._lock = RLock()
+        self._archives = state.get('_archives', [])
+        self._value_types = state.get('_value_types', {})
+        self._data_types = state.get('_data_types', {})
+        self._templates = state.get('_templates', {})
+        self._cache = PackageStoreCache(
+            TypeCache.build(self._value_types),
+            TypeCache.build(self._data_types),
+            TypeCache.build(self._templates))
+
     def archives(self) -> 'Collection[Archive]':
         """
         Return a copy of the collection of the set of loaded :class:`Archive`s.

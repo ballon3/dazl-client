@@ -17,6 +17,7 @@ from ..model.core import ConfigurationError, Party
 from ..util.config_meta import config_field, \
     BOOLEAN_TYPE, COUNT_TYPE, LOG_LEVEL_TYPE, PARTIES_TYPE, PATH_TYPE, PORT_TYPE, SECONDS_TYPE, \
     STRING_TYPE, URL_TYPE, VERIFY_SSL_TYPE, config_fields, add_argument
+from ..util.dar import DarFile
 
 # If this environment variable is set, is used in place of a configuration file if none is supplied
 # on the command-line.
@@ -136,6 +137,11 @@ class _NetworkConfig(URLConfig):
         param_type=SECONDS_TYPE,
         default_value=1)
 
+    dar_files: Optional[Sequence[DarFile]] = config_field(
+        '.dar files that correspond to this application. If supplied, ONLY these DARs are '
+        'made available to the application.'
+    )
+
     use_acs_service: bool = config_field(
         'Use Active Contract Set service instead of reading from the Transaction event stream',
         param_type=BOOLEAN_TYPE,
@@ -147,7 +153,7 @@ class _NetworkConfig(URLConfig):
         default_value=120)
 
     max_consequence_depth: Optional[int] = config_field(
-        'The maximum number of times to wait for all parties to arrive at the same offset' +
+        'The maximum number of times to wait for all parties to arrive at the same offset '
         'before failing with an error',
         param_type=COUNT_TYPE,
         default_value=50)
@@ -231,6 +237,8 @@ class PartyConfig(_PartyConfig):
 
 
 C = TypeVar('C', bound='_TopLevelConfig')
+
+
 @dataclass(frozen=True)
 class _TopLevelConfig:
     @classmethod

@@ -1,5 +1,4 @@
 daml 1.2
-
 module Primitives where
 
 template SimpleFields

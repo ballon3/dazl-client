@@ -4,7 +4,6 @@
 import pytest
 
 from dazl.util.dar import DarFile
-from .dars import Pending
 
 
 @pytest.mark.skip('This API does not really work yet, nor is it finalized')

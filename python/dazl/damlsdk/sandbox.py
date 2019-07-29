@@ -7,14 +7,13 @@ either through the Sandbox or one local to the build tree of the project.
 """
 
 import logging
-from contextlib import ExitStack
 from pathlib import Path
-from typing import Collection, Sequence, Optional, Type, Union, Tuple, ContextManager
+from typing import Collection, Sequence, Optional, Type, Union, Tuple
 
 from dataclasses import dataclass
+from semver import VersionInfo
 
 from .. import LOG
-from .fetch import sdk_component_path
 from ..model.core import DazlError
 from ..model.ledger import TimeModel, StaticTimeModel, RealTimeModel
 from ..model.network import SSLSettings
@@ -34,24 +33,19 @@ class SandboxOptions:
 def sandbox(daml_path: 'Union[str, Path, Collection[str], Collection[Path]]',
             port: 'Optional[int]' = None,
             backend: 'Optional[str]' = None,
-            damlc: 'Optional[str]' = None,
             time_model_type: 'Type[TimeModel]' = StaticTimeModel,
             ssl_settings: 'Optional[SSLSettings]' = None,
-            extra_args: 'Optional[Sequence[str]]' = None,
-            damlc_extra_args: 'Optional[Sequence[str]]' = None) -> ProcessWatcher:
+            extra_args: 'Optional[Sequence[str]]' = None) -> ProcessWatcher:
     """
     Run an instance of the Sandbox.
 
     :param daml_path:
-        The path to the DAML file or DAR file to open, or a list of files.
+        The path to the DAR file to open, or a list of files.
     :param port:
         The port to bind the server to, or ``None`` to pick a port at random and use it.
     :param backend:
         ``None`` to use the default backend (``'sdk'`` if it is found, otherwise ``'damlc'``) or a
         string that identifies a backend.
-    :param damlc:
-        ``None`` to use the default DAML compiler (``'sdk'`` if it found) or a string that
-        identifies a DAML compiler.
     :param time_model_type:
         The mode in which to run the Sandbox clock. Defaults to static time.
     :param ssl_settings:
@@ -59,9 +53,6 @@ def sandbox(daml_path: 'Union[str, Path, Collection[str], Collection[Path]]',
         Sandbox starts up in HTTP.
     :param extra_args:
         Extra arguments to pass to the Sandbox.
-    :param damlc_extra_args:
-        Extra arguments to pass to the compiler (only used when compilation is performed as part
-        of running the Sandbox).
     :return:
         A ``SandboxRunner`` that can be used as a context object to end the process.
     """
@@ -92,7 +83,7 @@ def sandbox(daml_path: 'Union[str, Path, Collection[str], Collection[Path]]',
         daml_path = [str(daml_path)]
 
     options = SandboxOptions(files=daml_path, port=port, extra_args=full_extra_args)
-    proc_opts = _sandbox(options, backend, damlc_component=damlc, damlc_extra_args=damlc_extra_args)
+    proc_opts = _sandbox(options, backend)
     pw = ProcessWatcher(proc_opts)
     pw.extra_data = proc_opts.extra_data
     pw.url = f'http://localhost:{port}'
@@ -102,14 +93,10 @@ def sandbox(daml_path: 'Union[str, Path, Collection[str], Collection[Path]]',
 @dataclass(frozen=True)
 class _SandboxIntermediateOptions:
     args: 'Tuple[str]'
-    context: 'Optional[ContextManager]'
     files: 'Collection[str]'
 
 
-def _sandbox(options: SandboxOptions,
-             component: 'Optional[str]' = None,
-             damlc_component: 'Optional[str]' = None,
-             damlc_extra_args: 'Sequence[str]' = None) \
+def _sandbox(options: SandboxOptions, component: 'Optional[str]' = None) \
         -> 'ProcessContext':
     name, path = sdk_component_path(component or 'sandbox')
     if name == 'damlc':
@@ -137,22 +124,12 @@ def _sandbox(options: SandboxOptions,
         watch_port=options.port, extra_data={'files': int_opts.files})
 
 
-def _sandbox_options(options: 'SandboxOptions',
-                     damlc_component: 'Optional[str]',
-                     damlc_extra_args: 'Sequence[str]') \
+def _sandbox_options(options: 'SandboxOptions', version: 'Union[None, str, VersionInfo]' = None) \
         -> '_SandboxIntermediateOptions':
-    from ..util.dar import TemporaryDar
-
     files = []
-    context = ExitStack()
     for file in options.files:
         ext = Path(file).suffix.lower()
-        if ext == '.daml':
-            # the Java Sandbox needs .daml files to be converted to a package first
-            temp_dar = TemporaryDar(
-                file, damlc_component=damlc_component, damlc_extra_args=damlc_extra_args)
-            files.extend(context.enter_context(temp_dar))
-        elif ext == '.dalf':
+        if ext == '.dalf':
             files.append(file)
         elif ext == '.dar':
             files.append(file)
@@ -161,7 +138,6 @@ def _sandbox_options(options: 'SandboxOptions',
 
     return _SandboxIntermediateOptions(
         args=tuple(str(s) for s in [*options.extra_args, '--port', options.port, *files]),
-        context=context,
         files=files)
 
 

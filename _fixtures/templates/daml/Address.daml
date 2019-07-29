@@ -1,5 +1,4 @@
 daml 1.2
-
 module Address where
 
 data Address = US USAddress | UK UKAddress

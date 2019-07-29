@@ -16,8 +16,6 @@ from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
 
-from .artifacts import load_artifacts, get_artifact_url, parse_component_identifier
-
 from semver import VersionInfo
 
 from .. import LOG
@@ -55,13 +53,15 @@ def ensure_sdk_component(
 
     url = get_artifact_url(artifacts.root_url, artifact_loc, version, platform=target_platform)
 
-    installation_dir = Path.home() / '.da' / 'packages' / component / str(version)
+    installation_dir = Path.home() / '.daml' / 'sdk' / str(version)
     if installation_dir.exists():
-        # if the top-level directory already exists, assume we already downloaded it
+        # if the top-level directory already exists, assume the SDK Assistant already downloaded it
         if not force:
             return FetchResult(installation_dir, url, False)
     else:
         installation_dir.parent.mkdir(parents=True, exist_ok=True)
+        import subprocess
+        subprocess.run(['daml', 'install', 'version'])
 
     if artifact_loc.packaging in ('tar.gz', 'tgz'):
         extract_sdk_tgz(url, installation_dir, force=force)

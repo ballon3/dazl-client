@@ -5,7 +5,6 @@ import logging
 from operator import setitem
 
 from dazl import sandbox, create, exercise, Network
-from .dars import Complicated as ComplicatedDar
 
 PARTY = 'Operator'
 

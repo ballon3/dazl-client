@@ -7,7 +7,6 @@ from unittest import TestCase
 from dazl.model.types_store import PackageStore, PackageProvider, MemoryPackageProvider
 from dazl.protocols.v1.grpc import grpc_package_sync
 from dazl.util.dar import DarFile
-from .dars import AllKindsOf, Pending
 
 
 def test_package_sync_multiple_loads():

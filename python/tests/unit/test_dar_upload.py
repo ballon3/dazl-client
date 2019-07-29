@@ -4,7 +4,6 @@
 from asyncio import new_event_loop, set_event_loop, sleep
 
 from dazl import Network, sandbox
-from .dars import AllKindsOf
 
 
 def test_dar_uploads_near_startup():

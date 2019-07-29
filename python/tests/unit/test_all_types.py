@@ -4,8 +4,7 @@
 import datetime
 from decimal import Decimal
 
-from dazl import sandbox, create, Network
-from .dars import AllKindsOf
+from dazl import create, Network
 
 
 PARTY = 'Operator'
@@ -28,16 +27,16 @@ SOME_ARGS = dict(
     theUnit=dict())
 
 
-def test_all_types():
+def test_all_types(sandbox):
     test_case = AllTypesTestCase()
-    with sandbox(AllKindsOf) as proc:
-        network = Network()
-        network.set_config(url=proc.url)
 
-        party_client = network.aio_party(PARTY)
-        party_client.add_ledger_ready(test_case.create_one_of_everything)
-        party_client.add_ledger_created(TEMPLATE, test_case.on_one_of_everything)
-        network.run_until_complete()
+    network = Network()
+    network.set_config(url=sandbox)
+
+    party_client = network.aio_party(PARTY)
+    party_client.add_ledger_ready(test_case.create_one_of_everything)
+    party_client.add_ledger_created(TEMPLATE, test_case.on_one_of_everything)
+    network.run_until_complete()
 
     assert test_case.found_instance is not None, \
         'Expected to find an instance of OneOfEverything!'
@@ -51,19 +50,18 @@ def test_all_types():
         assert expected == actual, f'Failed to compare types for key: {key}'
 
 
-def test_maps():
-    with sandbox(AllKindsOf) as proc:
-        network = Network()
-        network.set_config(url=proc.url)
+def test_maps(sandbox):
+    network = Network()
+    network.set_config(url=sandbox)
 
-        party_client = network.aio_party(PARTY)
-        party_client.add_ledger_ready(lambda e: create(
-            'AllKindsOf.MappyContract', {
-                'operator': PARTY,
-                'value': {'Map_internal': []}
-            }))
+    party_client = network.aio_party(PARTY)
+    party_client.add_ledger_ready(lambda e: create(
+        'AllKindsOf.MappyContract', {
+            'operator': PARTY,
+            'value': {'Map_internal': []}
+        }))
 
-        network.run_until_complete()
+    network.run_until_complete()
 
 
 class AllTypesTestCase:

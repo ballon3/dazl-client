@@ -24,7 +24,6 @@ def run(init: 'Callable[[Network], None]'):
     configure_parser(arg_parser, config_file_support=True)
     args = arg_parser.parse_args()
 
-    print(args)
     config = NetworkConfig.get_config(args)
     network = Network()
     network.set_config(config)

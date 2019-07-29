@@ -3,38 +3,37 @@
 
 import logging
 
-from dazl import sandbox, create, Network
-
-from .dars import AllParty
+from dazl import create, Network
 
 SOME_PARTY = 'SomeParty'
 PUBLISHER = 'Publisher'
 ALL_PARTY = '000'
-PrivateContract = 'AllParty.PrivateContract'
-PublicContract = 'AllParty.PublicContract'
+PrivateContract = 'Visibility.PrivateContract'
+PublicContract = 'Visibility.PublicContract'
 
 
-def test_some_party_receives_public_contract():
+def test_some_party_receives_public_contract(sandbox, dar_fixtures):
     some_party_cids = []
     publisher_cids = []
-    with sandbox(AllParty, extra_args=None) as proc:
-        network = Network()
-        network.set_config(url=proc.url, party_groups=[ALL_PARTY])
 
-        some_client = network.aio_party(SOME_PARTY)
-        some_client.add_ledger_ready(lambda _: create(PrivateContract, {'someParty': SOME_PARTY}))
+    network = Network()
+    network.set_config(url=sandbox, party_groups=[ALL_PARTY], dar_files=[dar_fixtures['0.13.38']])
 
-        publisher_client = network.aio_party(PUBLISHER)
-        publisher_client.add_ledger_ready(lambda _: create(PublicContract, {'publisher': PUBLISHER, 'allParty': ALL_PARTY}))
+    some_client = network.aio_party(SOME_PARTY)
+    some_client.add_ledger_ready(lambda _: create(PrivateContract, {'someParty': SOME_PARTY}))
 
-        some_client.add_ledger_created(PublicContract, lambda e: some_party_cids.append(e.cid))
-        some_client.add_ledger_created(PrivateContract, lambda e: some_party_cids.append(e.cid))
+    publisher_client = network.aio_party(PUBLISHER)
+    publisher_client.add_ledger_ready(lambda _: create(PublicContract, {'publisher': PUBLISHER, 'allParty': ALL_PARTY}))
 
-        publisher_client.add_ledger_created(PublicContract, lambda e: publisher_cids.append(e.cid))
-        publisher_client.add_ledger_created(PrivateContract, lambda e: publisher_cids.append(e.cid))
+    some_client.add_ledger_created(PublicContract, lambda e: some_party_cids.append(e.cid))
+    some_client.add_ledger_created(PrivateContract, lambda e: some_party_cids.append(e.cid))
 
-        network.run_until_complete()
+    publisher_client.add_ledger_created(PublicContract, lambda e: publisher_cids.append(e.cid))
+    publisher_client.add_ledger_created(PrivateContract, lambda e: publisher_cids.append(e.cid))
 
-    logging.info(f'got to the end with some_party contracts: {some_party_cids} and publisher contracts: {publisher_cids}')
+    network.run_until_complete()
+
+    logging.debug(f'got to the end with some_party contracts: {some_party_cids} and publisher contracts: {publisher_cids}')
+
     assert len(some_party_cids) == 2
     assert len(publisher_cids) == 1

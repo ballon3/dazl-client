@@ -6,13 +6,12 @@ Tests to ensure that packages can be loaded.
 """
 from operator import setitem
 
-from dazl import sandbox, Network
+from dazl import Network
 from dazl.model.types_store import PackageStore
 from dazl.util.dar import DarFile
-from .dars import AllKindsOf
 
 
-def test_package_loading():
+def test_package_loading(sandbox):
     d = {}
     with DarFile(AllKindsOf) as dar:
         expected_package_ids = dar.get_package_provider().get_package_ids()

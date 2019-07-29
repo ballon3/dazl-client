@@ -3,7 +3,6 @@
 
 from dazl.pretty import DamlPrettyPrinter, PrettyOptions
 from dazl.util.dar import DarFile
-from .dars import Pending
 
 
 def test_render_list_of_party_old():

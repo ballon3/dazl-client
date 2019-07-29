@@ -4,7 +4,6 @@
 import pytest
 
 from dazl.util.dar import DarFile
-from .dars import Pending
 
 
 @pytest.mark.skip('Something about the way dazl compiles DARs currently causes this field to be blank')

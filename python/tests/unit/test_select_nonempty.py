@@ -4,7 +4,6 @@
 from asyncio import wait_for, ensure_future
 
 from dazl import sandbox, exercise, Network, AIOPartyClient
-from .dars import Simple
 
 
 PARTY = 'Operator'

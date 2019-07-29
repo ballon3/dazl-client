@@ -6,7 +6,6 @@ import logging
 import random
 
 from dazl import create, exercise, sandbox, Network
-from .dars import Simple as SimpleDar
 
 NOTIFICATION_COUNT = 20
 PARTY_COUNT = 10

@@ -8,7 +8,6 @@ from aiohttp import ClientSession
 
 from dazl import Network, sandbox, create, exercise_by_key
 from dazl.model.core import Party
-from .dars import TestServer as TestServerDar
 
 
 Alice = Party("Alice")

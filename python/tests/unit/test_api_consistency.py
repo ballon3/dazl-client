@@ -1,8 +1,7 @@
 # Copyright (c) 2019 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-from dazl.client.api import AIOPartyClient, SimplePartyClient
-from dazl.model.core import Party
+from dazl import AIOPartyClient, SimplePartyClient, Party
 
 
 def test_api_consistency():
@@ -17,4 +16,3 @@ def test_api_consistency():
     callable_tpcs = {key: getattr(tpc, key) for key in dir(tpc) if not key.startswith('_') and callable(getattr(tpc, key))}
 
     assert sorted(set(callable_apcs.keys())) == sorted(set(callable_tpcs.keys()))
-

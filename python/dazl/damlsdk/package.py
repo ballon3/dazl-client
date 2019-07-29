@@ -3,10 +3,10 @@
 
 import logging
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from typing import Sequence, Union
 
-from .. import LOG
-from .fetch import sdk_component_path
+from semver import VersionInfo
+
 from ..util.process import ProcessContext
 
 
@@ -20,17 +20,8 @@ class PackageOptions:
     extra_args: 'Sequence[str]'
 
 
-def package(options: 'PackageOptions', component: 'Optional[str]' = None) -> 'ProcessContext':
-    name, path = sdk_component_path(component or 'damlc')
-
-    if name != 'damlc':
-        raise ValueError(f'Unknown packaging component: {component}')
-
-    LOG.info('Using %s to create a DAR package...', name)
-    jars = list(path.glob('*.jar'))
-    if len(jars) != 1:
-        raise Exception(f"Could not find damlc jar in {path}")
-    args = ['java', '-jar', jars[0], *_damlc_package_options(options)]
+def package(options: 'PackageOptions', version: 'Union[None, str, VersionInfo]' = None) -> 'ProcessContext':
+    args = ['daml', 'package', *_damlc_package_options(options)]
     return ProcessContext(args, logger=logging.getLogger('damlc'))
 
 

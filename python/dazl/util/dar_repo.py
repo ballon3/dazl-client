@@ -8,7 +8,7 @@ from typing import Union, List, Sequence
 
 from .. import LOG
 from ..model.types_store import PackageStore
-from ..util.dar import TemporaryDar, parse_dalf, DarFile
+from ..util.dar import parse_dalf, DarFile
 from ..util.path_util import pathify
 
 
@@ -22,13 +22,7 @@ class LocalDarRepository:
     def _add_source(self, path: Path) -> None:
         ext = path.suffix.lower()
 
-        if ext == '.daml':
-            dar_create_start_time = time.time()
-            dar_paths = self._context.enter_context(TemporaryDar(path))
-            self.add_source(*dar_paths)
-            LOG.debug('Compiled a dar in % seconds.', time.time() - dar_create_start_time)
-
-        elif ext == '.dalf':
+        if ext == '.dalf':
             dalf_package = parse_dalf(path.read_bytes())
             self._dar_paths.append(path)
             self.store.register_all(dalf_package)
@@ -48,7 +42,7 @@ class LocalDarRepository:
 
     def add_source(self, *files: Union[str, Path]) -> None:
         """
-        Add a source file (either a .daml file, .dalf file, or a .dar file).
+        Add a source file (either a .dalf file or a .dar file).
 
         Attempts to add the same file more than once will be ignored.
 

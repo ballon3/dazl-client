@@ -23,6 +23,10 @@ class ListAllCommand(CliCommand):
         return arg_parser
 
     def execute(self, args) -> int:
+        if not args.parties:
+            print('At least one party must be specified')
+            return 1
+
         fmt = args.format
         template_filter = [template.strip() for template in args.template_filter.split(',')] \
             if args.template_filter is not None else None

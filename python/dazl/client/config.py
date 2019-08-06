@@ -29,6 +29,8 @@ if TYPE_CHECKING:
     ArgumentParser = argparse._ActionsContainer
 
 
+C = TypeVar('C', bound='_TopLevelConfig')
+
 DEFAULT_CONNECT_TIMEOUT_SECONDS = 120
 
 
@@ -230,7 +232,6 @@ class PartyConfig(_PartyConfig):
     party: Optional[Party] = None
 
 
-C = TypeVar('C', bound='_TopLevelConfig')
 @dataclass(frozen=True)
 class _TopLevelConfig:
     @classmethod

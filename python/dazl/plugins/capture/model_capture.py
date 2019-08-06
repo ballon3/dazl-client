@@ -20,14 +20,12 @@ class LedgerCapture:
         self.store: Optional[PackageStore] = None
 
     def capture(self, party: str, contract_id: ContractId, contract_data: Optional[ContractData], time):
+        print(party, contract_id, contract_data, time)
         entry = self.entries.get(contract_id)
         if entry is not None:
             entry.extend(party, contract_id, contract_data)
         else:
             self.entries[contract_id] = LedgerCaptureEntry(party, contract_id, contract_data, time)
-
-    def capture_archive(self, party: str, contract_id: ContractId):
-        return self.capture(party, contract_id, None)
 
     def excluding_inactive(self):
         return filter(lambda e: not e.is_archived(), self)

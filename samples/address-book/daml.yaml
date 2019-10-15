@@ -1,0 +1,13 @@
+sdk-version: 0.13.19
+name: address-book
+version: 1.0.0
+source: daml/AddressBook.daml
+#scenario: Main:mainScenario
+parties:
+- Alice
+- Bob
+exposed-modules:
+- AddressBook
+dependencies:
+- daml-prim
+- daml-stdlib

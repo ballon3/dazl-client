@@ -1,0 +1,96 @@
+daml 1.2
+
+module AddressBook where
+
+import DA.TextMap
+
+data USAddress = USAddress
+  with
+    name: Optional Text
+    organization: Optional Text
+    lines: Text
+    city: Text
+    state: USState
+    zip: Int
+  deriving (Eq, Show)
+
+
+data USState = 
+    AL |
+    AK |
+    AZ |
+    AR |
+    CA |
+    CO |
+    CT |
+    DE |
+    DC |
+    FL |
+    GA |
+    HI |
+    ID |
+    IL |
+    IN |
+    IA |
+    KS |
+    KY |
+    LA |
+    ME |
+    MT |
+    NE |
+    NV |
+    NH |
+    NJ |
+    NM |
+    NY |
+    NC |
+    ND |
+    OH |
+    OK |
+    OR |
+    MD |
+    MA |
+    MI |
+    MN |
+    MS |
+    MO |
+    PA |
+    RI |
+    SC |
+    SD |
+    TN |
+    TX |
+    UT |
+    VT |
+    VA |
+    WA |
+    WV |
+    WI |
+    WY
+  deriving (Eq, Show)
+
+
+data UKAddress = UKAddress
+  with
+    name: Optional Text
+    organization: Optional Text
+    street: Text
+    locality: Text
+    town: Text
+    postcode: Text
+  deriving (Eq, Show)
+
+
+data Address = US USAddress | 
+    UK UKAddress
+  deriving (Eq, Show)
+    
+
+
+template Card
+  with
+    owner: Party
+    address: Address
+    metadata: TextMap Text
+  where
+    signatory owner

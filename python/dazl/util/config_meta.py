@@ -117,6 +117,13 @@ def _parse_party_list(obj) -> 'Sequence[Party]':
         return obj
 
 
+def _parse_package_id_list(obj) -> 'Sequence[str]':
+    if isinstance(obj, str):
+        return obj.split(',')
+    else:
+        return obj
+
+
 BOOLEAN_TYPE = ConfigParameterType(None, bool)
 COUNT_TYPE = ConfigParameterType('COUNT', int)
 BLOCK_OFFSET_TYPE = ConfigParameterType('OFFSET', _parse_block_offset)
@@ -124,6 +131,7 @@ LOG_LEVEL_TYPE = ConfigParameterType('LOG_LEVEL', _parse_log_level)
 SECONDS_TYPE = ConfigParameterType('SECONDS', float)
 URL_TYPE = ConfigParameterType('URL', _parse_url)
 PARTIES_TYPE = ConfigParameterType('PARTIES', _parse_party_list)
+PACKAGE_IDS_TYPE = ConfigParameterType('PACKAGE_IDS_TYPE', _parse_package_id_list)
 PORT_TYPE = ConfigParameterType('PORT', int)
 STRING_TYPE = ConfigParameterType('STRING', _parse_str)
 PATH_TYPE = ConfigParameterType('PATH', _parse_str)

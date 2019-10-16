@@ -31,6 +31,7 @@ class PackageStoreBuilder:
         self._value_types = dict()  # type: Dict[ValueReference, Expr]
         self._data_types = dict()  # type: Dict[TypeReference, Type]
         self._templates = dict()  # type: Dict[TypeReference, Template]
+        self._expected_package_ids = None  # type: Optional[Collection[str]]
 
     def add_archive(self, archive: 'Archive') -> None:
         self._archives.append(archive)
@@ -46,11 +47,16 @@ class PackageStoreBuilder:
     def add_template(self, template: Template):
         self._templates[template.data_type.name] = safe_cast(Template, template)
 
+    def add_expected_package_ids(self, expected_package_ids: 'Collection[str]'):
+        self._expected_package_ids = expected_package_ids
+
     def get_type(self, name: TypeReference) -> Optional[Type]:
         return self._data_types.get(name)
 
     def build(self) -> 'PackageStore':
-        return PackageStore(self._archives, self._value_types, self._data_types, self._templates)
+        return PackageStore(
+            self._archives, self._value_types, self._data_types, self._templates,
+            self._expected_package_ids)
 
 
 class PackageStore:
@@ -63,20 +69,22 @@ class PackageStore:
         """
         Create an empty store.
         """
-        return cls([], {}, {}, {})
+        return cls([], {}, {}, {}, None)
 
     def __init__(
             self,
             archives: 'Collection[Archive]',
             value_types: 'Dict[ValueReference, Expr]',
             data_types: 'Dict[TypeReference, Type]',
-            templates: 'Dict[TypeReference, Template]'):
+            templates: 'Dict[TypeReference, Template]',
+            expected_package_ids: 'Optional[Collection[str]]' = None):
         self._lock = RLock()
         self._archives = list(archives)
         self._cache = PackageStoreCache(EMPTY_TYPE_CACHE, EMPTY_TYPE_CACHE, EMPTY_TYPE_CACHE)
         self._value_types = value_types  # safe_dict_cast(ValueReference, Expr, value_types)
         self._data_types = safe_dict_cast(TypeReference, Type, data_types)
         self._templates = safe_dict_cast(TypeReference, Template, templates)
+        self._expected_package_ids = expected_package_ids
 
     def archives(self) -> 'Collection[Archive]':
         """
@@ -98,6 +106,12 @@ class PackageStore:
         """
         with self._lock:
             return [a.hash for a in self._archives]
+
+    def expected_package_ids(self) -> 'Collection[str]':
+        """
+        Return package IDs that are expected to be found on the ledger.
+        """
+        return self._expected_package_ids
 
     def register_all(self, other_store: 'PackageStore') -> 'PackageStore':
         """

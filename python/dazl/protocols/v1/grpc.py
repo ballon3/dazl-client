@@ -215,6 +215,8 @@ def grpc_main_thread(connection: 'GRPCv1Connection', ledger_id: str) -> Iterable
 
     package_provider = GRPCPackageProvider(connection, ledger_id)
 
+    # TODO: We could probably disable package syncing if expected packages are provided AND we have
+    #  fetched metadata for them all.
     grpc_package_sync(package_provider, store)
 
     time_iter = maybe_grpc_time_stream(connection.time_service, ledger_id)
@@ -273,10 +275,20 @@ class GRPCPackageProvider(PackageProvider):
 def grpc_package_sync(package_provider: PackageProvider, store: 'PackageStore') -> 'None':
     all_package_ids = package_provider.get_package_ids()
     loaded_package_ids = [a.hash for a in store.archives()]
+    expected_package_ids = store.expected_package_ids()
+
+    def should_load(package_id: str) -> bool:
+        # TODO: Filtering by expected package IDs may cause packages to never fully load due to
+        #  transitive dependencies; here we put the onus on the app writer to ensure that they
+        #  supply the complete graph, and we don't even warn them if there is an issue (but
+        #  we could only actually warn them if we parse the archive, which is the expensive
+        #  operation we're trying to avoid).
+        return (expected_package_ids is None or package_id in expected_package_ids) and \
+            package_id not in loaded_package_ids
 
     metadatas_pb = {}
     for package_id in all_package_ids:
-        if package_id not in loaded_package_ids:
+        if should_load(package_id):
             archive_payload = package_provider.fetch_package(package_id)
             metadatas_pb[package_id] = parse_archive_payload(archive_payload)
 

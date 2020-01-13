@@ -22,8 +22,7 @@ from ._base_model import IfMissingPartyBehavior, CREATE_IF_MISSING, NONE_IF_MISS
 from ._party_client_impl import _PartyClientImpl
 from ._run_level import RunState
 from .bots import Bot, BotCollection
-from .config import AnonymousNetworkConfig, NetworkConfig, URLConfig, \
-    DEFAULT_CONNECT_TIMEOUT_SECONDS
+from .config import AnonymousNetworkConfig, NetworkConfig, URLConfig
 from ..metrics import MetricEvents
 from ..model.core import Party, RunLevel, DazlPartyMissingError
 from ..model.ledger import LedgerMetadata
@@ -36,6 +35,9 @@ from ..util.dar import get_dar_package_ids
 from ..util.prim_types import to_timedelta, TimeDeltaConvertible
 
 T = TypeVar('T')
+
+
+EXPECTED_RESPONSIVENESS_THRESHOLD = timedelta(milliseconds=500)
 
 
 class _NetworkImpl:
@@ -110,6 +112,16 @@ class _NetworkImpl:
 
     def resolved_anonymous_config(self) -> 'AnonymousNetworkConfig':
         return AnonymousNetworkConfig.parse_kwargs(**self._config)
+
+    def _loop_responsiveness_tick(self, responsiveness: 'timedelta'):
+        """
+        Called periodically in order to verify the overall health of the main event loop.
+        """
+        if responsiveness >= EXPECTED_RESPONSIVENESS_THRESHOLD:
+            LOG.warning("dazl detected an abnormally slow main thread (%1.2f ms). Make sure you are not accidentally "
+                        "blocking in async callbacks.",
+                        responsiveness.total_seconds() * 1000)
+        self._metrics.loop_responsiveness(responsiveness)
 
     async def aio_run(self, *coroutines, run_state: Optional[RunState] = None) -> None:
         """
@@ -371,7 +383,7 @@ class _NetworkImpl:
             self, package_ids: 'Collection[str]', timeout: 'TimeDeltaConvertible'):
         from asyncio import wait_for, TimeoutError
         timeout = to_timedelta(timeout)
-        expire_time = datetime.max #datetime.utcnow() + timeout
+        expire_time = datetime.utcnow() + timeout
         metadata = await wait_for(self.aio_metadata(), timeout.total_seconds())
         package_id_set = set(package_ids)
         while datetime.utcnow() < expire_time:
